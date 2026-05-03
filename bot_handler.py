@@ -35,11 +35,37 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     admin_id = context.bot_data.get('admin_id', 6201234513)
     is_admin = update.effective_user.id == admin_id
     
+    # Проверяем есть ли параметры в команде /start
+    args = context.args if context.args else []
+    logger.info(f"Start command with args: {args}")
+    
     if is_admin:
+        # Если админ перешел по ссылке для чата
+        if args and len(args) > 0 and args[0].startswith('chat_'):
+            # Извлекаем параметры чата
+            chat_params = args[0].replace('chat_', '').split('_')
+            if len(chat_params) >= 2:
+                client_id = chat_params[0]
+                order_id = chat_params[1]
+                logger.info(f"Admin starting chat with client {client_id} for order {order_id}")
+                
+                # Создаем искусственный callback для начала чата
+                class MockQuery:
+                    def __init__(self, message):
+                        self.message = message
+                        self.from_user = message.from_user
+                    
+                    async def answer(self):
+                        pass
+                
+                mock_query = MockQuery(update.message)
+                await start_chat_with_client(mock_query, client_id, order_id, context)
+                return
+        
         # Админ видит панель управления
         keyboard = [
-            [InlineKeyboardButton("� Управление заказами", callback_data="admin_orders")],
-            [InlineKeyboardButton("� Открыть магазин", web_app={'url': 'https://your-app-url.com'})]
+            [InlineKeyboardButton("📋 Управление заказами", callback_data="admin_orders")],
+            [InlineKeyboardButton("🛒 Открыть магазин", web_app={'url': 'https://your-app-url.com'})]
         ]
         await update.message.reply_text(
             "👋 Панель администратора OPTRA Pharm!\n\n"
@@ -259,7 +285,7 @@ async def send_order_notification_to_client(client_id: str, order_id: str, statu
     except Exception as e:
         logger.error(f"Error sending client notification: {e}")
 
-async def start_chat_with_client(query, user_id: str, order_id: str, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def start_chat_with_client(query_or_message, user_id: str, order_id: str, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Начать чат с клиентом"""
     try:
         logger.info(f"Starting chat with user_id: {user_id}, order_id: {order_id}")
@@ -281,7 +307,7 @@ async def start_chat_with_client(query, user_id: str, order_id: str, context: Co
         
         # Сохраняем активный чат
         active_chats[user_id] = {
-            'admin_id': query.from_user.id,
+            'admin_id': query_or_message.from_user.id,
             'order_id': order_id,
             'client_name': client_name,
             'client_username': client_username
@@ -304,21 +330,27 @@ async def start_chat_with_client(query, user_id: str, order_id: str, context: Co
             [InlineKeyboardButton("📱 Профиль клиента", callback_data=f"client_profile_{user_id}")]
         ])
         
-        await query.edit_message_text(message_text, reply_markup=reply_markup)
+        # Определяем тип объекта (callback query или message)
+        if hasattr(query_or_message, 'edit_message_text'):
+            # Это callback query
+            await query_or_message.edit_message_text(message_text, reply_markup=reply_markup)
+        else:
+            # Это обычное сообщение
+            await query_or_message.reply_text(message_text, reply_markup=reply_markup)
         
         logger.info(f"Successfully started chat with client {user_id} ({client_name})")
         
     except Exception as e:
         logger.error(f"Error starting chat: {e}", exc_info=True)
+        error_message = "❌ Ошибка при начале чата. Попробуйте снова."
+        
         try:
-            await query.edit_message_text("❌ Ошибка при начале чата. Попробуйте снова.")
+            if hasattr(query_or_message, 'edit_message_text'):
+                await query_or_message.edit_message_text(error_message)
+            else:
+                await query_or_message.reply_text(error_message)
         except Exception as edit_error:
-            logger.error(f"Error editing message: {edit_error}")
-            # Если не можем отредактировать, отправляем новое сообщение
-            try:
-                await query.message.reply_text("❌ Ошибка при начале чата. Попробуйте снова.")
-            except:
-                logger.error("Could not send error message")
+            logger.error(f"Error sending error message: {edit_error}")
 
 async def show_client_profile(query, user_id: str, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Показать профиль клиента"""
