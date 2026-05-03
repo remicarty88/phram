@@ -201,7 +201,7 @@ function openProduct(id) {
     document.getElementById('modal-title').innerText = currentProduct.name;
     document.getElementById('modal-brand').innerText = currentProduct.category.toUpperCase();
     document.getElementById('modal-price').innerText = `$${currentProduct.price}`;
-    document.getElementById('modal-price-btn').innerText = `$${currentPrice = currentProduct.price}`;
+    document.getElementById('modal-price-btn').innerText = `$${currentProduct.price}`;
     
     const modalImageContainer = document.getElementById('modal-image-container');
     modalImageContainer.innerHTML = `
@@ -346,4 +346,5 @@ function renderAdminProductList() {
 
 // Start Loading
 loadProducts();
+
 
