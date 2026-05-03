@@ -1,0 +1,268 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --bg-main: #000000;
+    --bg-card: #0A0A0B;
+    --accent: #FFB800;
+    --accent-glow: rgba(255, 184, 0, 0.15);
+    --text-primary: #FFFFFF;
+    --text-secondary: #8E8E93;
+    --glass-border: rgba(255, 255, 255, 0.06);
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    position: fixed;
+    letter-spacing: -0.01em;
+}
+
+#app {
+    height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 120px;
+}
+
+
+.glass {
+    background: rgba(10, 10, 11, 0.8);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.glass-card {
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: 28px;
+    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.glass-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(255, 184, 0, 0.03), transparent);
+    pointer-events: none;
+}
+
+.glass-card:active {
+    transform: scale(0.96) translateY(2px);
+    background: #111112;
+}
+
+.product-image-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1/1;
+    background: #0D0D0E;
+    border-radius: 22px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.product-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 8px;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.glass-card:active .product-image-container img {
+    transform: scale(1.08);
+}
+
+.accent-gradient {
+    background: linear-gradient(135deg, #FFD600 0%, #FFB800 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #FFD600 0%, #FFB800 100%);
+    color: #000000;
+    font-weight: 700;
+    border-radius: 20px;
+    box-shadow: 0 12px 24px -8px rgba(255, 184, 0, 0.4);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px -4px rgba(255, 184, 0, 0.4);
+}
+
+.category-pill {
+    padding: 12px 24px;
+    border-radius: 20px;
+    background: #0D0D0E;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+}
+
+.category-pill.active {
+    background: var(--accent);
+    color: #000000;
+    border-color: var(--accent);
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px -5px rgba(255, 184, 0, 0.3);
+}
+
+.category-pill:active {
+    transform: scale(0.95);
+}
+
+.bottom-sheet {
+    transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+    transform: translateY(100%);
+    background: #0A0A0B;
+    border-top: 1px solid var(--glass-border);
+}
+
+.bottom-sheet.open {
+    transform: translateY(0);
+}
+
+.product-image-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1/1;
+    background: #0D0D0E;
+    border-radius: 22px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.92) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-in {
+    animation: fadeInScale 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.tab-btn {
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px;
+    box-shadow: 0 0 8px var(--accent);
+}
+
+.shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+}
+
+#loader {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: #000000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.loader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: loader-entrance 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.loader-logo-text {
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    color: #ffffff;
+    margin-bottom: 2px;
+    line-height: 1;
+}
+
+.loader-sub-text {
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.4em;
+    color: #FFB800;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+}
+
+.loader-line-container {
+    width: 180px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.05);
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+}
+
+.loader-line-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: #FFB800;
+    box-shadow: 0 0 20px #FFB800;
+    animation: line-fill 2.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+@keyframes loader-entrance {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes line-fill {
+    0% { width: 0%; left: 0; }
+    50% { width: 100%; left: 0; }
+    100% { width: 100%; left: 0; }
+}
+
+.loader-hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(1.05);
+}
