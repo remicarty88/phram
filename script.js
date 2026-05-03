@@ -312,8 +312,8 @@ function handleCheckout() {
                 timestamp: Date.now()
             }).then(() => {
                 // Отправляем сообщение вам через Telegram Bot API
-                const botToken = 'YOUR_BOT_TOKEN'; // Замените на токен вашего бота
-                const yourChatId = 'YOUR_CHAT_ID'; // Замените на ваш ID
+                const botToken = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN'; // Токен из ENV или замените вручную
+                const yourChatId = '6201234513'; // Ваш ID администратора
                 
                 const message = `🛒 НОВЫЙ ЗАКАЗ #${orderId}\\n` +
                                `👤 Клиент: ${user?.first_name || 'Guest'} (@${user?.username || 'unknown'})\\n` +
@@ -321,15 +321,28 @@ function handleCheckout() {
                                `📦 Товары:\\n${orderText}\\n\\n` +
                                `⏰ Время: ${new Date().toLocaleString()}`;
                 
-                // Отправляем уведомление вам в бот
-                if (botToken !== 'YOUR_BOT_TOKEN' && yourChatId !== 'YOUR_CHAT_ID') {
+                // Отправляем уведомление в тот же бот с кнопками для общения
+                if (botToken !== 'YOUR_BOT_TOKEN') {
+                    const keyboard = {
+                        inline_keyboard: [
+                            [
+                                { text: '✅ Принять заказ', callback_data: `accept_${orderId}` },
+                                { text: '❌ Отклонить', callback_data: `reject_${orderId}` }
+                            ],
+                            [
+                                { text: '💬 Написать клиенту', callback_data: `chat_${user?.id}_${orderId}` }
+                            ]
+                        ]
+                    };
+
                     fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             chat_id: yourChatId,
                             text: message,
-                            parse_mode: 'HTML'
+                            parse_mode: 'HTML',
+                            reply_markup: keyboard
                         })
                     }).then(response => {
                         if (!response.ok) {
@@ -337,7 +350,7 @@ function handleCheckout() {
                         }
                     }).catch(err => console.log('Ошибка отправки уведомления:', err));
                 } else {
-                    console.warn('Telegram Bot API не настроен. Проверьте botToken и yourChatId в script.js');
+                    console.warn('Telegram Bot API не настроен. Проверьте botToken в script.js или ENV переменную BOT_TOKEN');
                 }
                 
                 tg.showAlert(`Заказ ${orderId} оформлен! С вами свяжутся в ближайшее время.`);
