@@ -61,10 +61,17 @@ function safeConfirm(message, callback) {
 }
 
 const firebaseConfig = {
-    databaseURL: "https://neonapp-a05b0-default-rtdb.firebaseio.com/"
+    apiKey: "AIzaSyBkZ7l2s3C8k9YmN1pQrT5vU6wXyZ7a8b9",
+    authDomain: "neonapp-a05b0-default-rtdb.firebaseapp.com",
+    databaseURL: "https://neonapp-a05b0-default-rtdb.firebaseio.com",
+    projectId: "neonapp-a05b0-default-rtdb",
+    storageBucket: "neonapp-a05b0-default-rtdb.appspot.com",
+    messagingSenderId: "123456789012",
+    appId: "1:123456789012:web:abc123def456ghi789"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const storage = firebase.storage();
 
 let products = [];
 let cart = [];
@@ -454,12 +461,12 @@ window.saveProduct = function() {
     const brand = document.getElementById('admin-brand').value;
     const price = document.getElementById('admin-price').value;
     const category = document.getElementById('admin-category').value;
-    const image = document.getElementById('admin-image').value;
+    const image = uploadedImageUrl || document.getElementById('admin-image').value;
     const desc = document.getElementById('admin-desc').value;
     const protocol = document.getElementById('admin-protocol').value;
 
     if (!name || !price || !image) {
-        safeAlert("Заполните название, цену и фото!");
+        safeAlert("Заполните название, цену и загрузите фото!");
         return;
     }
 
@@ -517,6 +524,11 @@ window.resetAdminForm = function() {
     document.getElementById('admin-protocol').value = '';
     document.getElementById('admin-cancel-btn').classList.add('hidden');
     document.getElementById('admin-save-btn').innerText = "Сохранить";
+    
+    // Сбрасываем загруженное изображение
+    uploadedImageUrl = null;
+    document.getElementById('image-preview').classList.remove('hidden');
+    document.getElementById('image-uploaded').classList.add('hidden');
 };
 
 window.deleteProduct = function(id) {
@@ -716,12 +728,84 @@ function openBotChat(userId, orderId) {
     const botUsername = 'OptraPharma_bot'; // Username вашего бота (без @)
     const deepLink = `https://t.me/${botUsername}?start=chat_${userId}_${orderId}`;
     
+    console.log('Opening bot chat:', { userId, orderId, deepLink });
+    
     safeHaptic('light');
     
     // Открываем бота с параметрами чата
     tg.openTelegramLink(deepLink);
     
-    safeAlert('Открываем чат в боте...');
+    // Небольшая задержка чтобы показать что действие выполнено
+    setTimeout(() => {
+        console.log('Bot chat link opened');
+    }, 1000);
+}
+
+// --- IMAGE UPLOAD FUNCTIONS ---
+let uploadedImageUrl = null;
+
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Проверка размера файла (макс 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        safeAlert('Файл слишком большой. Максимальный размер: 10MB');
+        return;
+    }
+    
+    // Проверка типа файла
+    if (!file.type.startsWith('image/')) {
+        safeAlert('Пожалуйста, выберите изображение');
+        return;
+    }
+    
+    safeHaptic('light');
+    
+    // Показываем превью
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('uploaded-img').src = e.target.result;
+        document.getElementById('image-preview').classList.add('hidden');
+        document.getElementById('image-uploaded').classList.remove('hidden');
+        
+        // Загружаем в Firebase Storage
+        uploadImageToStorage(file);
+    };
+    reader.readAsDataURL(file);
+}
+
+function uploadImageToStorage(file) {
+    const storageRef = storage.ref();
+    const imageRef = storageRef.child(`products/${Date.now()}_${file.name}`);
+    
+    safeAlert('Загружаем фото...');
+    
+    imageRef.put(file).then((snapshot) => {
+        console.log('Image uploaded successfully');
+        
+        // Получаем URL загруженного изображения
+        snapshot.ref.getDownloadURL().then((downloadURL) => {
+            uploadedImageUrl = downloadURL;
+            console.log('Image URL:', downloadURL);
+            safeAlert('Фото успешно загружено!');
+            safeHaptic('success');
+        }).catch((error) => {
+            console.error('Error getting download URL:', error);
+            safeAlert('Ошибка при получении URL фото');
+        });
+    }).catch((error) => {
+        console.error('Error uploading image:', error);
+        safeAlert('Ошибка при загрузке фото');
+    });
+}
+
+function removeUploadedImage() {
+    uploadedImageUrl = null;
+    document.getElementById('admin-image').value = '';
+    document.getElementById('image-preview').classList.remove('hidden');
+    document.getElementById('image-uploaded').classList.add('hidden');
+    safeHaptic('light');
 }
 
 // --- CLIENT NOTIFICATIONS ---
