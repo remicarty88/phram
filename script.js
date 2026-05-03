@@ -368,7 +368,7 @@ function handleCheckout() {
                 timestamp: Date.now()
             }).then(() => {
                 // Отправляем сообщение вам через Telegram Bot API
-                const botToken = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN'; // Токен из ENV или замените вручную
+                const botToken = 'YOUR_BOT_TOKEN'; // Замените на токен вашего бота
                 const yourChatId = '6201234513'; // Ваш ID администратора
                 
                 const message = `🛒 НОВЫЙ ЗАКАЗ #${orderId}\\n` +
