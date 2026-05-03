@@ -637,11 +637,11 @@ function renderAdminOrders() {
             </div>
             
             <div class="flex gap-2">
-                ${o.userUsername ? `
-                    <button onclick="tg.openTelegramLink('https://t.me/${o.userUsername}')" 
+                ${o.userUsername || o.userId ? `
+                    <button onclick="openBotChat('${o.userId || o.userUsername}', '${o.id}')" 
                             class="flex-1 bg-blue-500/10 text-blue-400 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-blue-500/20 transition-colors">
                         <i data-lucide="message-circle" class="w-3 h-3"></i>
-                        Написать клиенту
+                        Написать в боте
                     </button>
                 ` : ''}
                 
@@ -709,6 +709,19 @@ function updateOrderStatus(orderId, status) {
     db.ref('orders/' + orderId).update({ status: status }).then(() => {
         safeAlert(`Заказ ${orderId} ${status === 'accepted' ? 'принят' : 'отклонен'}!`);
     });
+}
+
+function openBotChat(userId, orderId) {
+    // Открываем бота с параметром для начала чата
+    const botUsername = 'YOUR_BOT_USERNAME'; // Замените на username вашего бота (без @)
+    const deepLink = `https://t.me/${botUsername}?start=chat_${userId}_${orderId}`;
+    
+    safeHaptic('light');
+    
+    // Открываем бота с параметрами чата
+    tg.openTelegramLink(deepLink);
+    
+    safeAlert('Открываем чат в боте...');
 }
 
 // --- CLIENT NOTIFICATIONS ---
