@@ -296,7 +296,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 def main() -> None:
     """Главная функция"""
     # Ваш токен бота
-    BOT_TOKEN = os.getenv('BOT_TOKEN', 'YOUR_BOT_TOKEN')  # Из ENV или замените вручную
+    BOT_TOKEN = '8771687545:AAHheZqYf_myfyGUgutE3nYXrmfhmj0TLV4'  # Ваш токен
     ADMIN_ID = 6201234513  # Ваш ID администратора
     
     # Создаем приложение
@@ -316,3 +316,5 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
+
+
