@@ -67,35 +67,65 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Обработка inline кнопок"""
     query = update.callback_query
-    await query.answer()
-    
     data = query.data
     
-    if data == 'admin_orders':
-        # Показать админскую панель заказов
-        await show_admin_orders(query, context)
+    logger.info(f"Received callback: {data}")
     
-    elif data.startswith('accept_'):
-        # Принять заказ
-        order_id = data.replace('accept_', '')
-        await accept_order(query, order_id, context)
+    try:
+        await query.answer()
+    except Exception as e:
+        logger.error(f"Error answering callback: {e}")
     
-    elif data.startswith('reject_'):
-        # Отклонить заказ
-        order_id = data.replace('reject_', '')
-        await reject_order(query, order_id, context)
-    
-    elif data.startswith('chat_'):
-        # Начать чат с клиентом
-        parts = data.replace('chat_', '').split('_')
-        user_id = parts[0]
-        order_id = parts[1] if len(parts) > 1 else None
-        await start_chat_with_client(query, user_id, order_id, context)
-    
-    elif data.startswith('client_profile_'):
-        # Показать профиль клиента
-        user_id = data.replace('client_profile_', '')
-        await show_client_profile(query, user_id, context)
+    try:
+        if data == 'admin_orders':
+            # Показать админскую панель заказов
+            await show_admin_orders(query, context)
+        
+        elif data.startswith('accept_'):
+            # Принять заказ
+            order_id = data.replace('accept_', '')
+            logger.info(f"Accepting order: {order_id}")
+            await accept_order(query, order_id, context)
+        
+        elif data.startswith('reject_'):
+            # Отклонить заказ
+            order_id = data.replace('reject_', '')
+            logger.info(f"Rejecting order: {order_id}")
+            await reject_order(query, order_id, context)
+        
+        elif data.startswith('chat_'):
+            # Начать чат с клиентом
+            parts = data.replace('chat_', '').split('_')
+            user_id = parts[0] if parts else None
+            order_id = parts[1] if len(parts) > 1 else None
+            
+            logger.info(f"Starting chat with user: {user_id}, order: {order_id}")
+            
+            if not user_id:
+                logger.error("No user_id in chat callback")
+                await query.edit_message_text("❌ Ошибка: не найден ID клиента")
+                return
+                
+            await start_chat_with_client(query, user_id, order_id, context)
+        
+        elif data.startswith('client_profile_'):
+            # Показать профиль клиента
+            user_id = data.replace('client_profile_', '')
+            logger.info(f"Showing profile for user: {user_id}")
+            await show_client_profile(query, user_id, context)
+        
+        elif data == 'back_to_orders':
+            await show_admin_orders(query, context)
+            
+        else:
+            logger.warning(f"Unknown callback data: {data}")
+            
+    except Exception as e:
+        logger.error(f"Error handling callback {data}: {e}")
+        try:
+            await query.edit_message_text("❌ Произошла ошибка. Попробуйте снова.")
+        except:
+            pass
 
 async def show_admin_orders(query, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Показать админскую панель заказов"""
@@ -232,14 +262,22 @@ async def send_order_notification_to_client(client_id: str, order_id: str, statu
 async def start_chat_with_client(query, user_id: str, order_id: str, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Начать чат с клиентом"""
     try:
+        logger.info(f"Starting chat with user_id: {user_id}, order_id: {order_id}")
+        
         # Получаем информацию о клиенте
-        order_snapshot = db.reference(f'orders/{order_id}').get() if order_id else None
         client_name = "Клиент"
         client_username = "unknown"
         
-        if order_snapshot:
-            client_name = order_snapshot.get('userName', 'Клиент')
-            client_username = order_snapshot.get('userUsername', 'unknown')
+        if order_id:
+            order_snapshot = db.reference(f'orders/{order_id}').get()
+            if order_snapshot:
+                client_name = order_snapshot.get('userName', 'Клиент')
+                client_username = order_snapshot.get('userUsername', 'unknown')
+                logger.info(f"Found order data: name={client_name}, username={client_username}")
+            else:
+                logger.warning(f"Order {order_id} not found")
+        else:
+            logger.warning("No order_id provided")
         
         # Сохраняем активный чат
         active_chats[user_id] = {
@@ -252,24 +290,35 @@ async def start_chat_with_client(query, user_id: str, order_id: str, context: Co
         # Формируем сообщение с информацией о клиенте
         client_info = f"@{client_username}" if client_username != 'unknown' else f"ID: {user_id}"
         
-        await query.edit_message_text(
+        message_text = (
             f"💬 Чат с {client_name} ({client_info})\n\n"
-            f"📦 Заказ: #{order_id}\n\n"
-            f"� Отправьте сообщение для клиента:\n"
-            f"• Текст будет доставлен клиенту\n"
+            f"📦 Заказ: #{order_id or 'Не указан'}\n\n"
+            f"💭 Отправьте сообщение для клиента:\n"
+            f"• Текст будет сохранен в системе\n"
             f"• Клиент увидит в приложении\n\n"
-            f"🔙 /back - к списку заказов",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 К списку заказов", callback_data="back_to_orders")],
-                [InlineKeyboardButton("📱 Профиль клиента", callback_data=f"client_profile_{user_id}")]
-            ])
+            f"🔙 Используйте кнопки ниже для навигации"
         )
         
-        logger.info(f"Started chat with client {user_id} ({client_name})")
+        reply_markup = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 К списку заказов", callback_data="back_to_orders")],
+            [InlineKeyboardButton("📱 Профиль клиента", callback_data=f"client_profile_{user_id}")]
+        ])
+        
+        await query.edit_message_text(message_text, reply_markup=reply_markup)
+        
+        logger.info(f"Successfully started chat with client {user_id} ({client_name})")
         
     except Exception as e:
-        logger.error(f"Error starting chat: {e}")
-        await query.edit_message_text("❌ Ошибка при начале чата")
+        logger.error(f"Error starting chat: {e}", exc_info=True)
+        try:
+            await query.edit_message_text("❌ Ошибка при начале чата. Попробуйте снова.")
+        except Exception as edit_error:
+            logger.error(f"Error editing message: {edit_error}")
+            # Если не можем отредактировать, отправляем новое сообщение
+            try:
+                await query.message.reply_text("❌ Ошибка при начале чата. Попробуйте снова.")
+            except:
+                logger.error("Could not send error message")
 
 async def show_client_profile(query, user_id: str, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Показать профиль клиента"""
@@ -320,10 +369,17 @@ async def show_client_profile(query, user_id: str, context: ContextTypes.DEFAULT
 async def back_to_orders(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Вернуться к списку заказов"""
     query = update.callback_query
-    await query.answer()
     
-    # Показываем список активных заказов
-    await show_orders_list(query, context)
+    try:
+        await query.answer()
+        # Показываем админскую панель заказов
+        await show_admin_orders(query, context)
+    except Exception as e:
+        logger.error(f"Error in back_to_orders: {e}")
+        try:
+            await query.edit_message_text("❌ Ошибка при возврате к заказам")
+        except:
+            pass
 
 async def show_orders_list(query, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Показать список заказов"""
@@ -418,4 +474,3 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-
