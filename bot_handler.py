@@ -8,6 +8,7 @@ import asyncio
 import logging
 import os
 import time
+import urllib.parse
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 import firebase_admin
@@ -32,7 +33,7 @@ active_chats = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Команда /start"""
-    admin_id = context.bot_data.get('admin_id', 6201234513)
+    admin_id = context.bot_data.get('admin_id', 612366813)
     is_admin = update.effective_user.id == admin_id
     
     # Проверяем есть ли параметры в команде /start
@@ -46,35 +47,49 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             logger.info(f"Processing start parameter: {param}")
             
             if param.startswith('chat_'):
-                # Извлекаем параметры чата
-                chat_params = param.replace('chat_', '').split('_')
-                logger.info(f"Chat params extracted: {chat_params}")
-                
-                if len(chat_params) >= 2:
-                    client_id = chat_params[0]
-                    order_id = chat_params[1]
-                    logger.info(f"Admin starting chat with client {client_id} for order {order_id}")
+                # Извлекаем и декодируем параметры чата
+                encoded_params = param.replace('chat_', '')
+                try:
+                    decoded_params = urllib.parse.unquote(encoded_params)
+                    chat_params = decoded_params.split('_')
+                    logger.info(f"Chat params - encoded: {encoded_params}, decoded: {decoded_params}, split: {chat_params}")
                     
-                    try:
-                        # Создаем искусственный callback для начала чата
-                        class MockQuery:
-                            def __init__(self, message):
-                                self.message = message
-                                self.from_user = message.from_user
-                            
-                            async def answer(self):
-                                pass
+                    if len(chat_params) >= 2:
+                        client_id = chat_params[0]
+                        order_id = chat_params[1]
+                        logger.info(f"Admin starting chat with client {client_id} for order {order_id}")
                         
-                        mock_query = MockQuery(update.message)
-                        await start_chat_with_client(mock_query, client_id, order_id, context)
+                        # Проверяем что заказ существует
+                        order_snapshot = db.reference(f'orders/{order_id}').get()
+                        if not order_snapshot:
+                            logger.warning(f"Order {order_id} not found")
+                            await update.message.reply_text(f"❌ Заказ #{order_id} не найден.")
+                            return
+                        
+                        try:
+                            # Создаем искусственный callback для начала чата
+                            class MockQuery:
+                                def __init__(self, message):
+                                    self.message = message
+                                    self.from_user = message.from_user
+                                
+                                async def answer(self):
+                                    pass
+                            
+                            mock_query = MockQuery(update.message)
+                            await start_chat_with_client(mock_query, client_id, order_id, context)
+                            return
+                        except Exception as e:
+                            logger.error(f"Error starting chat from deep link: {e}")
+                            await update.message.reply_text("❌ Не удалось начать чат. Попробуйте снова.")
+                            return
+                    else:
+                        logger.warning(f"Invalid chat parameters: {chat_params}")
+                        await update.message.reply_text("❌ Неверная ссылка для чата.")
                         return
-                    except Exception as e:
-                        logger.error(f"Error starting chat from deep link: {e}")
-                        await update.message.reply_text("❌ Не удалось начать чат. Попробуйте снова.")
-                        return
-                else:
-                    logger.warning(f"Invalid chat parameters: {chat_params}")
-                    await update.message.reply_text("❌ Неверная ссылка для чата.")
+                except Exception as decode_error:
+                    logger.error(f"Error decoding chat parameters: {decode_error}")
+                    await update.message.reply_text("❌ Ошибка декодирования параметров чата.")
                     return
         
         # Админ видит панель управления
@@ -502,7 +517,7 @@ def main() -> None:
     """Главная функция"""
     # Ваш токен бота
     BOT_TOKEN = '8771687545:AAHheZqYf_myfyGUgutE3nYXrmfhmj0TLV4'  # Ваш токен
-    ADMIN_ID = 6201234513  # Ваш ID администратора
+    ADMIN_ID = 612366813  # Ваш ID администратора
     
     # Создаем приложение
     application = Application.builder().token(BOT_TOKEN).build()
