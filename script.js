@@ -386,12 +386,19 @@ function handleCheckout() {
                                 { text: '❌ Отклонить', callback_data: `reject_${orderId}` }
                             ],
                             [
-                                { text: '💬 Написать клиенту', callback_data: `chat_${user?.id}_${orderId}` }
+                                { text: '💬 Написать клиенту', callback_data: `chat_${user?.id || 'guest'}_${orderId}` }
                             ]
                         ]
                     };
 
-                    console.log('Отправка заказа в Telegram:', { botToken, yourChatId, message });
+                    console.log('Отправка заказа в Telegram:', { 
+                    botToken, 
+                    yourChatId, 
+                    message, 
+                    userId: user?.id,
+                    orderId,
+                    callback_data: `chat_${user?.id || 'guest'}_${orderId}`
+                });
                     
                     fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                         method: 'POST',
