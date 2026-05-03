@@ -1,8 +1,64 @@
 const tg = window.Telegram.WebApp;
 tg.expand();
-tg.enableClosingConfirmation();
+
+// Включаем подтверждение закрытия только если поддерживается
+if (tg.isVersionAtLeast('6.1')) {
+    tg.enableClosingConfirmation();
+}
 
 lucide.createIcons();
+
+// Безопасная функция для тактильной обратной связи
+function safeHaptic(type = 'light') {
+    try {
+        if (tg.HapticFeedback && tg.isVersionAtLeast('6.1')) {
+            switch(type) {
+                case 'light':
+                case 'medium':
+                case 'heavy':
+                    tg.HapticFeedback.impactOccurred(type);
+                    break;
+                case 'success':
+                case 'error':
+                case 'warning':
+                    tg.HapticFeedback.notificationOccurred(type);
+                    break;
+            }
+        }
+    } catch (e) {
+        // Игнорируем ошибки тактильной обратной связи
+    }
+}
+
+// Безопасная функция для показа всплывающих окон
+function safeAlert(message) {
+    try {
+        if (tg.isVersionAtLeast('6.2') && tg.showPopup) {
+            tg.showPopup({
+                title: 'Уведомление',
+                message: message,
+                buttons: [{text: 'OK'}]
+            });
+        } else {
+            alert(message);
+        }
+    } catch (e) {
+        alert(message);
+    }
+}
+
+// Безопасная функция для подтверждения
+function safeConfirm(message, callback) {
+    try {
+        if (tg.isVersionAtLeast('6.2') && tg.showConfirm) {
+            tg.showConfirm(message, callback);
+        } else {
+            callback(confirm(message));
+        }
+    } catch (e) {
+        callback(confirm(message));
+    }
+}
 
 const firebaseConfig = {
     databaseURL: "https://neonapp-a05b0-default-rtdb.firebaseio.com/"
@@ -141,7 +197,7 @@ function openProduct(id) {
     document.getElementById('product-modal').classList.add('open');
     document.getElementById('product-modal-backdrop').classList.add('opacity-100', 'pointer-events-auto');
     
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    safeHaptic('light');
 }
 
 function switchTab(tabName, el) {
@@ -163,7 +219,7 @@ function switchTab(tabName, el) {
         tabContent.style.opacity = 1;
     }, 150);
     
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    safeHaptic('light');
 }
 
 function closeProduct() {
@@ -189,7 +245,7 @@ function openCart() {
     renderCart();
     document.getElementById('cart-drawer').classList.add('open');
     document.getElementById('cart-drawer-backdrop').classList.add('opacity-100', 'pointer-events-auto');
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    safeHaptic('light');
 }
 
 function closeCart() {
@@ -205,7 +261,7 @@ function addToCart(productId) {
         cart.push(product);
         updateCartBadge();
         updateMainButton();
-        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        safeHaptic('success');
         
         // Анимация кнопки корзины
         const cartBtn = document.getElementById('cart-btn');
@@ -218,7 +274,7 @@ function addToCartFromModal() {
     if (currentProduct) {
         addToCart(currentProduct.id);
         closeProduct();
-        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        safeHaptic('success');
     }
 }
 
@@ -227,7 +283,7 @@ function removeFromCart(index) {
     renderCart();
     updateCartBadge();
     updateMainButton();
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    safeHaptic('light');
 }
 
 function updateCartBadge() {
@@ -274,7 +330,7 @@ function filterProducts(category, el) {
     document.querySelectorAll('.category-pill').forEach(btn => btn.classList.remove('active'));
     el.classList.add('active');
     renderProducts();
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    safeHaptic('light');
 }
 
 function updateMainButton() {
@@ -291,13 +347,13 @@ function updateMainButton() {
 }
 
 function handleCheckout() {
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    safeHaptic('medium');
     
     const total = cart.reduce((sum, p) => sum + parseFloat(p.price), 0);
     const user = tg.initDataUnsafe.user;
     const orderText = cart.map(item => `• ${item.name} - $${item.price}`).join('\\n');
     
-    tg.showConfirm(`Подтвердить заказ на сумму $${total.toFixed(2)}?`, (confirmed) => {
+    safeConfirm(`Подтвердить заказ на сумму $${total.toFixed(2)}?`, (confirmed) => {
         if (confirmed) {
             const orderId = 'OPT-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             
@@ -353,7 +409,7 @@ function handleCheckout() {
                     console.warn('Telegram Bot API не настроен. Проверьте botToken в script.js или ENV переменную BOT_TOKEN');
                 }
                 
-                tg.showAlert(`Заказ ${orderId} оформлен! С вами свяжутся в ближайшее время.`);
+                safeAlert(`Заказ ${orderId} оформлен! С вами свяжутся в ближайшее время.`);
                 cart = [];
                 updateMainButton();
                 updateCartBadge();
@@ -388,7 +444,7 @@ window.saveProduct = function() {
     const protocol = document.getElementById('admin-protocol').value;
 
     if (!name || !price || !image) {
-        tg.showAlert("Заполните название, цену и фото!");
+        safeAlert("Заполните название, цену и фото!");
         return;
     }
 
@@ -406,12 +462,12 @@ window.saveProduct = function() {
     const ref = db.ref('products');
     if (id) {
         ref.child(id).update(productData).then(() => {
-            tg.showAlert("Товар обновлен!");
+            safeAlert("Товар обновлен!");
             resetAdminForm();
         });
     } else {
         ref.push(productData).then(() => {
-            tg.showAlert("Товар добавлен!");
+            safeAlert("Товар добавлен!");
             resetAdminForm();
         });
     }
@@ -450,7 +506,7 @@ window.resetAdminForm = function() {
 
 window.deleteProduct = function(id) {
     if (confirm("Удалить этот товар?")) {
-        db.ref('products/' + id).remove().then(() => tg.showAlert("Товар удален"));
+        db.ref('products/' + id).remove().then(() => safeAlert("Товар удален"));
     }
 };
 
@@ -636,7 +692,7 @@ function filterOrders(filter) {
 
 function updateOrderStatus(orderId, status) {
     db.ref('orders/' + orderId).update({ status: status }).then(() => {
-        tg.showAlert(`Заказ ${orderId} ${status === 'accepted' ? 'принят' : 'отклонен'}!`);
+        safeAlert(`Заказ ${orderId} ${status === 'accepted' ? 'принят' : 'отклонен'}!`);
     });
 }
 
