@@ -704,4 +704,26 @@ function updateOrderStatus(orderId, status) {
     });
 }
 
+// --- CLIENT NOTIFICATIONS ---
+function loadClientNotifications() {
+    const user = tg.initDataUnsafe?.user;
+    if (!user) return;
+    
+    db.ref(`client_notifications/${user.id}`).on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            Object.keys(data).forEach(key => {
+                const notification = data[key];
+                if (!notification.shown) {
+                    safeAlert(notification.message);
+                    db.ref(`client_notifications/${user.id}/${key}`).update({ shown: true });
+                }
+            });
+        }
+    });
+}
+
+// Загружаем уведомления для клиента
+loadClientNotifications();
+
 loadProducts();
