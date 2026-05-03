@@ -81,7 +81,7 @@ let isAdmin = false;
 
 // Check Admin status from URL or Telegram user data
 const urlParams = new URLSearchParams(window.location.search);
-isAdmin = urlParams.get('admin') === 'true' || tg.initDataUnsafe?.user?.id === 123456789; // Replace with your Telegram ID
+isAdmin = urlParams.get('admin') === 'true' || tg.initDataUnsafe?.user?.id === 612366813; // Admin ID
 
 if (isAdmin) {
     const adminBtn = document.getElementById('admin-panel-btn');
@@ -655,6 +655,9 @@ function renderAdminOrders() {
                         <i data-lucide="message-circle" class="w-3 h-3"></i>
                         Написать в боте
                     </button>
+                    <div class="text-xs text-gray-600 mt-1">
+                        ID: ${o.userId || o.userUsername}
+                    </div>
                 ` : ''}
                 
                 ${o.status === 'pending' ? `
@@ -724,21 +727,45 @@ function updateOrderStatus(orderId, status) {
 }
 
 function openBotChat(userId, orderId) {
-    // Открываем бота с параметром для начала чата
-    const botUsername = 'OptraPharma_bot'; // Username вашего бота (без @)
-    const deepLink = `https://t.me/${botUsername}?start=chat_${userId}_${orderId}`;
+    // Проверяем параметры
+    if (!userId || !orderId) {
+        console.error('Missing parameters:', { userId, orderId });
+        safeAlert('Ошибка: не найден ID клиента или заказа');
+        return;
+    }
     
-    console.log('Opening bot chat:', { userId, orderId, deepLink });
+    // Проверяем что userId не 'guest'
+    if (userId === 'guest' || userId === 'unknown') {
+        console.error('Invalid userId:', { userId });
+        safeAlert('Ошибка: невозможно связаться с клиентом (guest user)');
+        return;
+    }
+    
+    // Кодируем параметры для URL
+    const params = encodeURIComponent(`${userId}_${orderId}`);
+    const botUsername = 'OptraPharma_bot'; // Username вашего бота (без @)
+    const deepLink = `https://t.me/${botUsername}?start=chat_${params}`;
+    
+    console.log('Opening bot chat:', { 
+        userId, 
+        orderId, 
+        encodedParams: params,
+        deepLink 
+    });
     
     safeHaptic('light');
     
-    // Открываем бота с параметрами чата
-    tg.openTelegramLink(deepLink);
+    // Показываем уведомление перед открытием
+    safeAlert('Открываем чат в боте...');
     
-    // Небольшая задержка чтобы показать что действие выполнено
-    setTimeout(() => {
-        console.log('Bot chat link opened');
-    }, 1000);
+    // Открываем бота с параметрами чата
+    try {
+        tg.openTelegramLink(deepLink);
+        console.log('Bot chat link opened successfully');
+    } catch (error) {
+        console.error('Error opening bot chat:', error);
+        safeAlert('Ошибка при открытии чата');
+    }
 }
 
 // --- IMAGE UPLOAD FUNCTIONS ---
