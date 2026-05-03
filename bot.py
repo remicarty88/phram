@@ -10,7 +10,7 @@ from http.server import SimpleHTTPRequestHandler
 import socketserver
 
 # ТОКЕН
-TOKEN = "8769551455:AAE6FEHT4CJ6WnxlMcYivm3vaJEv6JVi5Ok"
+TOKEN = "8771687545:AAHheZqYf_myfyGUgutE3nYXrmfhmj0TLV4"
 
 # Railway автоматически определяет домен
 DOMAIN = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "your-app.up.railway.app")
@@ -57,4 +57,5 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         pass
+
 
