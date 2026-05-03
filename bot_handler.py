@@ -41,26 +41,41 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     if is_admin:
         # Если админ перешел по ссылке для чата
-        if args and len(args) > 0 and args[0].startswith('chat_'):
-            # Извлекаем параметры чата
-            chat_params = args[0].replace('chat_', '').split('_')
-            if len(chat_params) >= 2:
-                client_id = chat_params[0]
-                order_id = chat_params[1]
-                logger.info(f"Admin starting chat with client {client_id} for order {order_id}")
+        if args and len(args) > 0:
+            param = args[0]
+            logger.info(f"Processing start parameter: {param}")
+            
+            if param.startswith('chat_'):
+                # Извлекаем параметры чата
+                chat_params = param.replace('chat_', '').split('_')
+                logger.info(f"Chat params extracted: {chat_params}")
                 
-                # Создаем искусственный callback для начала чата
-                class MockQuery:
-                    def __init__(self, message):
-                        self.message = message
-                        self.from_user = message.from_user
+                if len(chat_params) >= 2:
+                    client_id = chat_params[0]
+                    order_id = chat_params[1]
+                    logger.info(f"Admin starting chat with client {client_id} for order {order_id}")
                     
-                    async def answer(self):
-                        pass
-                
-                mock_query = MockQuery(update.message)
-                await start_chat_with_client(mock_query, client_id, order_id, context)
-                return
+                    try:
+                        # Создаем искусственный callback для начала чата
+                        class MockQuery:
+                            def __init__(self, message):
+                                self.message = message
+                                self.from_user = message.from_user
+                            
+                            async def answer(self):
+                                pass
+                        
+                        mock_query = MockQuery(update.message)
+                        await start_chat_with_client(mock_query, client_id, order_id, context)
+                        return
+                    except Exception as e:
+                        logger.error(f"Error starting chat from deep link: {e}")
+                        await update.message.reply_text("❌ Не удалось начать чат. Попробуйте снова.")
+                        return
+                else:
+                    logger.warning(f"Invalid chat parameters: {chat_params}")
+                    await update.message.reply_text("❌ Неверная ссылка для чата.")
+                    return
         
         # Админ видит панель управления
         keyboard = [
