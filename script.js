@@ -172,13 +172,14 @@ function renderProducts() {
         <div class="glass-card p-5 flex flex-col gap-4 animate-in" 
              style="animation-delay: ${index * 0.03}s"
              onclick="openProduct('${p.id}')">
-            <div class="product-image-container relative aspect-square bg-white/5 rounded-2xl overflow-hidden">
+            <div class="product-image-container relative aspect-square bg-white/5 rounded-2xl overflow-hidden flex items-center justify-center">
                 <img src="${p.image_url}" alt="${p.name}" class="w-full h-full object-contain p-2"
-                     onerror="this.src='https://via.placeholder.com/200'">
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                <i data-lucide="${p.icon || 'droplet'}" class="hidden w-12 h-12 text-[#FFB800]/20"></i>
                 <div class="absolute inset-0 bg-gradient-to-br from-amber-500/[0.03] to-transparent pointer-events-none"></div>
             </div>
             <div class="flex flex-col gap-1">
-                <p class="text-[10px] text-[#FFB800] font-extrabold uppercase tracking-[0.15em] opacity-80">${p.category}</p>
+                <p class="text-[10px] text-[#FFB800] font-extrabold uppercase tracking-[0.15em] opacity-80">${p.brand || 'OPTRA'}</p>
                 <h3 class="font-bold text-[15px] text-white leading-tight tracking-tight">${p.name}</h3>
             </div>
             <div class="flex justify-between items-center mt-auto pt-1">
@@ -199,14 +200,15 @@ function openProduct(id) {
     if (!currentProduct) return;
 
     document.getElementById('modal-title').innerText = currentProduct.name;
-    document.getElementById('modal-brand').innerText = currentProduct.category.toUpperCase();
+    document.getElementById('modal-brand').innerText = `${currentProduct.brand || 'OPTRA'} Laboratory`;
     document.getElementById('modal-price').innerText = `$${currentProduct.price}`;
     document.getElementById('modal-price-btn').innerText = `$${currentProduct.price}`;
     
     const modalImageContainer = document.getElementById('modal-image-container');
     modalImageContainer.innerHTML = `
         <img src="${currentProduct.image_url}" class="w-full h-full object-contain p-4 opacity-90" 
-             onerror="this.src='https://via.placeholder.com/400'">
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+        <i data-lucide="${currentProduct.icon || 'droplet'}" class="hidden w-24 h-24 text-[#FFB800]/20 absolute"></i>
         <div class="absolute inset-0 bg-gradient-to-t from-[#0A0A0B] via-transparent to-transparent pointer-events-none"></div>
     `;
     
@@ -351,4 +353,5 @@ function renderAdminProductList() {
 
 // Start Loading
 loadProducts();
+
 
