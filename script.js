@@ -210,8 +210,13 @@ function openProduct(id) {
         <div class="absolute inset-0 bg-gradient-to-t from-[#0A0A0B] via-transparent to-transparent pointer-events-none"></div>
     `;
     
-    document.getElementById('tab-details').innerText = currentProduct.desc || "Описание отсутствует";
-    document.getElementById('tab-protocol').innerText = currentProduct.protocol || "Протокол не указан";
+    // Поддержка полей desc и protocol
+    document.getElementById('tab-details').innerHTML = currentProduct.desc || "Описание ожидается...";
+    document.getElementById('tab-protocol').innerHTML = currentProduct.protocol || "Протокол будет добавлен позже.";
+    
+    // Переключение на первую вкладку по умолчанию
+    const tabs = document.querySelectorAll('.tab-btn');
+    if (tabs.length > 0) switchTab('details', tabs[0]);
     
     document.getElementById('product-modal').classList.add('open');
     document.getElementById('product-modal-backdrop').classList.add('opacity-100', 'pointer-events-auto');
@@ -346,5 +351,4 @@ function renderAdminProductList() {
 
 // Start Loading
 loadProducts();
-
 
