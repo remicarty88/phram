@@ -13,29 +13,44 @@ firebase_admin.initialize_app(cred, {
 })
 
 products_to_add = [
-    {
-        "category": "inject", 
-        "name": "Test Undecanoate", 
-        "price": 55, 
-        "image_url": "assets/img/photo_2026-05-03_13-46-28.jpg", 
-        "desc": "Инъекционный тестостерон пролонгированного действия. Способствует набору сухой мышечной массы, увеличивает силовые показатели и поддерживает высокую работоспособность.", 
-        "protocol": "Концентрация: 250mg/ml. Раствор для инъекций 10ml VIAL. Производитель: Magnus Pharmaceuticals (EU)."
+    # Инъекции
+    { 
+        "category": "inject", "name": "Test Undecanoate", "brand": "Magnus Pharmaceuticals", "price": 55, 
+        "image_url": "assets/img/photo_2026-05-03_13-46-28.jpg", "icon": "droplet", 
+        "desc": "Инъекционный тестостерон пролонгированного действия. Способствует набору сухой мышечной массы.", 
+        "protocol": "Концентрация: 250mg/ml. Раствор для инъекций 10ml VIAL." 
     },
-    {
-        "category": "peptide", 
-        "name": "GH SOMATROPIX", 
-        "price": 95, 
-        "image_url": "assets/img/photo_2026-05-03_13-46-28.jpg", 
-        "desc": "Гормон роста Somatropix 100 ед. Качество люкс для максимального восстановления и роста.", 
-        "protocol": "Дозировка: 2-5 ЕД в сутки. Инъекции подкожно."
+    { 
+        "category": "inject", "name": "DHB Cypionate", "brand": "ZPHC", "price": 80, 
+        "image_url": "assets/img/photo_2026-05-03_13-46-28.jpg", "icon": "droplet", 
+        "desc": "Дигидроболденон ципионат 100 мг/мл в ампулах. Мощный анаболик.", 
+        "protocol": "100-200мг в неделю." 
     },
-    {
-        "category": "peptide", 
-        "name": "BPC-157", 
-        "price": 45, 
-        "image_url": "assets/img/photo_2026-05-03_13-46-28.jpg", 
-        "desc": "Пептид для ускоренного восстановления связок, суставов и заживления тканей.", 
-        "protocol": "250-500мкг 2 раза в день локально или подкожно."
+    { 
+        "category": "inject", "name": "TriTren", "brand": "ZPHC", "price": 70, 
+        "image_url": "assets/img/photo_2026-05-03_13-46-28.jpg", "icon": "activity", 
+        "desc": "Смесь трех эфиров тренболона 10мл 150 мг/мл.", 
+        "protocol": "150-300мг в неделю." 
+    },
+    # Оральные
+    { 
+        "category": "oral", "name": "Oxy", "brand": "ZPHC", "price": 82, 
+        "image_url": "assets/img/photo_2026-05-03_13-46-28.jpg", "icon": "pill", 
+        "desc": "Оксиметолон 50 мг / 100 таб. Самый мощный оральный препарат.", 
+        "protocol": "50-100мг в день." 
+    },
+    # Пептиды
+    { 
+        "category": "peptide", "name": "GH SOMATROPIX", "brand": "Somatropix", "price": 95, 
+        "image_url": "assets/img/photo_2026-05-03_13-46-28.jpg", "icon": "dna", 
+        "desc": "Гормон роста Somatropix 100 ед. Качество люкс.", 
+        "protocol": "2-5 ЕД в сутки." 
+    },
+    { 
+        "category": "peptide", "name": "BPC-157", "brand": "Peptide", "price": 45, 
+        "image_url": "assets/img/photo_2026-05-03_13-46-28.jpg", "icon": "dna", 
+        "desc": "Пептид для восстановления связок 10 мг.", 
+        "protocol": "250-500мкг 2 раза в день." 
     }
 ]
 
