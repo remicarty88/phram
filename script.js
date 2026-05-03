@@ -713,7 +713,7 @@ function updateOrderStatus(orderId, status) {
 
 function openBotChat(userId, orderId) {
     // Открываем бота с параметром для начала чата
-    const botUsername = 'YOUR_BOT_USERNAME'; // Замените на username вашего бота (без @)
+    const botUsername = 'OptraPharma_bot'; // Username вашего бота (без @)
     const deepLink = `https://t.me/${botUsername}?start=chat_${userId}_${orderId}`;
     
     safeHaptic('light');
