@@ -40,6 +40,7 @@ window.addEventListener('load', () => {
 
 // Load Products from Firebase
 function loadProducts() {
+    console.log("Loading products...");
     db.ref('products').on('value', (snapshot) => {
         const data = snapshot.val();
         products = [];
@@ -48,8 +49,11 @@ function loadProducts() {
                 products.push({ id: key, ...data[key] });
             });
         }
+        console.log("Products loaded:", products);
         renderProducts();
         if (isAdmin) renderAdminProductList();
+    }, (error) => {
+        console.error("Firebase error:", error);
     });
 }
 
@@ -157,6 +161,8 @@ function filterProducts(category, el) {
 
 function renderProducts() {
     const grid = document.getElementById('product-grid');
+    if (!grid) return;
+
     const filtered = products.filter(p => {
         const matchesCategory = activeCategory === 'all' || p.category === activeCategory;
         const matchesSearch = p.name.toLowerCase().includes(searchQuery);
@@ -168,12 +174,16 @@ function renderProducts() {
         return;
     }
 
-    grid.innerHTML = filtered.map((p, index) => `
-        <div class="glass-card p-5 flex flex-col gap-4 animate-in" 
+    grid.innerHTML = filtered.map((p, index) => {
+        // Гарантируем правильный путь к фото
+        const imgSrc = p.image_url || p.image || '';
+        
+        return `
+        <div class="glass-card p-5 flex flex-col gap-4 animate-in cursor-pointer" 
              style="animation-delay: ${index * 0.03}s"
              onclick="openProduct('${p.id}')">
             <div class="product-image-container relative aspect-square bg-white/5 rounded-2xl overflow-hidden flex items-center justify-center">
-                <img src="${p.image_url}" alt="${p.name}" class="w-full h-full object-contain p-2"
+                <img src="${imgSrc}" alt="${p.name}" class="w-full h-full object-contain p-2"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
                 <i data-lucide="${p.icon || 'droplet'}" class="hidden w-12 h-12 text-[#FFB800]/20"></i>
                 <div class="absolute inset-0 bg-gradient-to-br from-amber-500/[0.03] to-transparent pointer-events-none"></div>
@@ -189,7 +199,7 @@ function renderProducts() {
                 </button>
             </div>
         </div>
-    `).join('');
+    `}).join('');
     lucide.createIcons();
 }
 
@@ -205,8 +215,10 @@ function openProduct(id) {
     document.getElementById('modal-price-btn').innerText = `$${currentProduct.price}`;
     
     const modalImageContainer = document.getElementById('modal-image-container');
+    const imgSrc = currentProduct.image_url || currentProduct.image || '';
+    
     modalImageContainer.innerHTML = `
-        <img src="${currentProduct.image_url}" class="w-full h-full object-contain p-4 opacity-90" 
+        <img src="${imgSrc}" class="w-full h-full object-contain p-4 opacity-90" 
              onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
         <i data-lucide="${currentProduct.icon || 'droplet'}" class="hidden w-24 h-24 text-[#FFB800]/20 absolute"></i>
         <div class="absolute inset-0 bg-gradient-to-t from-[#0A0A0B] via-transparent to-transparent pointer-events-none"></div>
