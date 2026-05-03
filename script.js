@@ -368,7 +368,7 @@ function handleCheckout() {
                 timestamp: Date.now()
             }).then(() => {
                 // Отправляем сообщение вам через Telegram Bot API
-                const botToken = 'YOUR_BOT_TOKEN'; // Замените на токен вашего бота
+                const botToken = '8771687545:AAHheZqYf_myfyGUgutE3nYXrmfhmj0TLV4'; // Токен вашего бота
                 const yourChatId = '6201234513'; // Ваш ID администратора
                 
                 const message = `🛒 НОВЫЙ ЗАКАЗ #${orderId}\\n` +
@@ -378,7 +378,7 @@ function handleCheckout() {
                                `⏰ Время: ${new Date().toLocaleString()}`;
                 
                 // Отправляем уведомление в тот же бот с кнопками для общения
-                if (botToken !== 'YOUR_BOT_TOKEN') {
+                if (botToken && botToken !== 'YOUR_BOT_TOKEN') {
                     const keyboard = {
                         inline_keyboard: [
                             [
@@ -391,6 +391,8 @@ function handleCheckout() {
                         ]
                     };
 
+                    console.log('Отправка заказа в Telegram:', { botToken, yourChatId, message });
+                    
                     fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -401,10 +403,16 @@ function handleCheckout() {
                             reply_markup: keyboard
                         })
                     }).then(response => {
+                        console.log('Response status:', response.status);
                         if (!response.ok) {
-                            console.error('Ошибка отправки в Telegram:', response.status);
+                            console.error('Ошибка отправки в Telegram:', response.status, response.statusText);
+                            response.text().then(text => console.error('Error details:', text));
+                        } else {
+                            console.log('✅ Заказ успешно отправлен в Telegram');
                         }
-                    }).catch(err => console.log('Ошибка отправки уведомления:', err));
+                    }).catch(err => {
+                        console.error('Ошибка отправки уведомления:', err);
+                    });
                 } else {
                     console.warn('Telegram Bot API не настроен. Проверьте botToken в script.js или ENV переменную BOT_TOKEN');
                 }
